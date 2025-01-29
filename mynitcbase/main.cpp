@@ -125,22 +125,3 @@ int main(int argc, char *argv[])
 //   return 0;
 // }
 
-//////stage1//////////////////////
-// int main(int argc, char *argv[]) {
-//   /* Initialize the Run Copy of Disk */
-//   Disk disk_run;
-//   unsigned char buffer[BLOCK_SIZE];
-//   Disk::readBlock(buffer,7000);
-//   char message[]="Hello";
-//   memcpy(buffer+20,message,6);
-//   Disk::writeBlock(buffer,7000);
-//   char message2[6];
-//   unsigned char buffer2[BLOCK_SIZE];
-//   Disk::readBlock(buffer2,7000);
-//   memcpy(message2,buffer2+20,6);
-//   printf("%s\n",message2);
-//   // StaticBuffer buffer;
-//   // OpenRelTable cache;
-
-//   // return FrontendInterface::handleFrontend(argc, argv);
-// }
