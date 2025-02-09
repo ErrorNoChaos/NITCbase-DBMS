@@ -14,7 +14,7 @@ struct BufferMetaInfo {
 class StaticBuffer {
   friend class BlockBuffer;
 
- private:
+ public:
   // fields
   static unsigned char blocks[BUFFER_CAPACITY][BLOCK_SIZE];
   static struct BufferMetaInfo metainfo[BUFFER_CAPACITY];

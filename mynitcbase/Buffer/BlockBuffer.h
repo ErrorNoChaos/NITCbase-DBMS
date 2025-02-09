@@ -39,7 +39,7 @@ struct Index {
 };
 
 class BlockBuffer {
- protected:
+   protected:
   // field
   int blockNum;
   // methods
