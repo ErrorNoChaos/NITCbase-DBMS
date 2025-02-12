@@ -5,7 +5,6 @@ AttrCacheEntry *AttrCacheTable::attrCache[MAX_OPEN];
 
 int AttrCacheTable::getAttrCatEntry(int relId, int attrOffset, AttrCatEntry *attrCatBuf)
 {
-    // check if 0 <= relId < MAX_OPEN and return E_OUTOFBOUND otherwise
     if(relId<0 || relId>=MAX_OPEN){
         return E_OUTOFBOUND;
     }   
@@ -19,11 +18,9 @@ int AttrCacheTable::getAttrCatEntry(int relId, int attrOffset, AttrCatEntry *att
         {
             *attrCatBuf=entry->attrCatEntry;
             return SUCCESS;
-            // copy entry->attrCatEntry to *attrCatBuf and return SUCCESS;
         }
     }
 
-    // there is no attribute at this offset
     return E_ATTRNOTEXIST;
 }
 
