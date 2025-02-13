@@ -1,24 +1,15 @@
 #include "BlockBuffer.h"
 #include <cstdlib>
 #include <cstring>
-// the declarations for these functions can be found in "BlockBuffer.h"
-
-// the declarations for these functions can be found in "BlockBuffer.h"
-
-/*
-Used to get the header of the block into the location pointed to by `head`
-NOTE: this function expects the caller to allocate memory for `head`
-*/
 BlockBuffer::BlockBuffer(int blockNum)
 {
     this->blockNum=blockNum;
-    // initialise this.blockNum with the argument
+
 }
  RecBuffer::RecBuffer(int blockNum) : BlockBuffer::BlockBuffer(blockNum) {}
 
 int BlockBuffer::loadBlockAndGetBufferPtr(unsigned char **buffPtr)
 {
-    // check whether the block is already present in the buffer using StaticBuffer.getBufferNum()
     int bufferNum = StaticBuffer::getBufferNum(this->blockNum);
 
     if (bufferNum == E_BLOCKNOTINBUFFER)
@@ -33,7 +24,6 @@ int BlockBuffer::loadBlockAndGetBufferPtr(unsigned char **buffPtr)
         Disk::readBlock(StaticBuffer::blocks[bufferNum], this->blockNum);
     }
 
-    // store the pointer to this buffer (blocks[bufferNum]) in *buffPtr
     *buffPtr = StaticBuffer::blocks[bufferNum];
 
     return SUCCESS;
@@ -45,10 +35,9 @@ int BlockBuffer::getHeader(struct HeadInfo *head)
     int ret = loadBlockAndGetBufferPtr(&bufferPtr);
     if (ret != SUCCESS)
     {
-        return ret; // return any errors that might have occured in the process
+        return ret;
     }
 
-    // ... (the rest of the logic is as in stage 2)
 
     memcpy(&head->numSlots, bufferPtr + 24, 4);
     memcpy(&head->numEntries, bufferPtr + 16, 4);
@@ -58,10 +47,6 @@ int BlockBuffer::getHeader(struct HeadInfo *head)
     return SUCCESS;
 }
 
-/*
-Used to get the record at slot `slotNum` into the array `rec`
-NOTE: this function expects the caller to allocate memory for `rec`
-*/
 int RecBuffer::getRecord(union Attribute *rec, int slotNum)
 {
     // ...
@@ -80,7 +65,48 @@ int RecBuffer::getRecord(union Attribute *rec, int slotNum)
     unsigned char *slotpointer=bufferPtr+offset;
     memcpy(rec,slotpointer,recordsize);
     return SUCCESS;
-    // ... (the rest of the logic is as in stage 2
+}
+
+int RecBuffer::getSlotMap(unsigned char *slotMap)
+{
+    unsigned char *bufferPtr;
+
+    int ret = loadBlockAndGetBufferPtr(&bufferPtr);
+    if (ret != SUCCESS)
+    {
+        return ret;
+    }
+
+    struct HeadInfo head;
+    this->getHeader(&head);
+    int slotCount = head.numSlots;
+
+    unsigned char *slotMapInBuffer = bufferPtr + HEADER_SIZE;
+    memcpy(slotMap,slotMapInBuffer,slotCount);
+    return SUCCESS;
+}
+int compareAttrs(union Attribute attr1, union Attribute attr2, int attrType)
+{
+
+    double diff;
+    if(attrType==STRING){
+        diff=strcmp(attr1.sVal,attr2.sVal);
+    }
+    else{
+        diff=attr1.nVal-attr2.nVal;
+    }
+    if(diff>0){
+        return 1;
+    }
+    else if (diff <0)
+    {
+        return -1;
+    }
+    else
+    {
+        return 0;
+    }
+
 }
 
 /*

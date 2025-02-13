@@ -112,7 +112,7 @@ OpenRelTable::OpenRelTable()
 OpenRelTable::~OpenRelTable()
 {
 
-    for(int i=0;i<12;i++){
+    for(int i=0;i<3;i++){
         if(RelCacheTable::relCache[i]!=nullptr){
             free(RelCacheTable::relCache[i]);
             RelCacheTable::relCache[i]=nullptr;
@@ -127,4 +127,16 @@ OpenRelTable::~OpenRelTable()
     
     }
 
+}
+
+int OpenRelTable::getRelId(char relName[ATTR_SIZE])
+{
+    if(strcmp(relName,RELCAT_RELNAME)==0){
+        return RELCAT_RELID;
+    }
+    else if(strcmp(relName,ATTRCAT_RELNAME)==0){
+        return ATTRCAT_RELID;   
+    }
+
+    return E_RELNOTOPEN;
 }

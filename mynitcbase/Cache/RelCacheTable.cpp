@@ -3,10 +3,48 @@
 #include <cstring>
 RelCacheEntry *RelCacheTable::relCache[MAX_OPEN];
 
-/*
-Get the relation catalog entry for the relation with rel-id `relId` from the cache
-NOTE: this function expects the caller to allocate memory for `*relCatBuf`
-*/
+int RelCacheTable::getSearchIndex(int relId, RecId *searchIndex)
+{
+
+    if(relId<0 || relId>=MAX_OPEN){
+        return E_OUTOFBOUND;
+    }
+    if(relCache[relId]==nullptr){
+        return E_RELNOTOPEN;
+    }
+    *searchIndex = relCache[relId]->searchIndex;
+    return SUCCESS;
+}
+
+int RelCacheTable::setSearchIndex(int relId, RecId *searchIndex)
+{
+
+    if (relId < 0 || relId >= MAX_OPEN)
+    {
+        return E_OUTOFBOUND;
+    }
+    if (relCache[relId] == nullptr)
+    {
+        return E_RELNOTOPEN;
+    }
+    relCache[relId]->searchIndex=*searchIndex;
+    return SUCCESS;
+}
+
+int RelCacheTable::resetSearchIndex(int relId)
+{
+    if (relId < 0 || relId >= MAX_OPEN)
+    {
+        return E_OUTOFBOUND;
+    }
+    if (relCache[relId] == nullptr)
+    {
+        return E_RELNOTOPEN;
+    }
+    RelCacheTable::setSearchIndex(relId,new RecId{-1,-1});
+    return SUCCESS;
+}
+
 int RelCacheTable::getRelCatEntry(int relId, RelCatEntry *relCatBuf)
 {
     if (relId < 0 || relId >= MAX_OPEN)
@@ -14,13 +52,11 @@ int RelCacheTable::getRelCatEntry(int relId, RelCatEntry *relCatBuf)
         return E_OUTOFBOUND;
     }
 
-    // if there's no entry at the rel-id
     if (relCache[relId] == nullptr)
     {
         return E_RELNOTOPEN;
     }
 
-    // copy the value to the relCatBuf argument
     *relCatBuf = relCache[relId]->relCatEntry;
 
     return SUCCESS;
