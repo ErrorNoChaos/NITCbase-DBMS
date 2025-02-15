@@ -7,7 +7,6 @@ int Frontend::select_from_table_where(char relname_source[ATTR_SIZE], char relna
 {
   return Algebra::select(relname_source, relname_target, attribute, op, value);
 }
-
 int Frontend::create_table(char relname[ATTR_SIZE], int no_attrs, char attributes[][ATTR_SIZE],
                            int type_attrs[]) {
   // Schema::createRel

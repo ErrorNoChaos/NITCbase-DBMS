@@ -41,7 +41,8 @@ int RelCacheTable::resetSearchIndex(int relId)
     {
         return E_RELNOTOPEN;
     }
-    RelCacheTable::setSearchIndex(relId,new RecId{-1,-1});
+    RecId search={-1,-1};
+    RelCacheTable::setSearchIndex(relId,&search);
     return SUCCESS;
 }
 
