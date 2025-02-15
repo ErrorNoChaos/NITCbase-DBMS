@@ -22,7 +22,7 @@ class OpenRelTable {
   static int openRel(char relName[ATTR_SIZE]);
   static int closeRel(int relId);
 
- private:
+ public:
   // field
   static OpenRelTableMetaInfo tableMetaInfo[MAX_OPEN];
 

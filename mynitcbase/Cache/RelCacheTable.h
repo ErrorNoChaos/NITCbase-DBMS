@@ -34,7 +34,7 @@ class RelCacheTable {
   static int setSearchIndex(int relId, RecId *searchIndex);
   static int resetSearchIndex(int relId);
 
- private:
+ public:
   // field
   static RelCacheEntry *relCache[MAX_OPEN];
 
