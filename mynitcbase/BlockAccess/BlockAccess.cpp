@@ -63,9 +63,9 @@ RecId BlockAccess::linearSearch(int relId, char attrName[ATTR_SIZE], union Attri
         // get slot map of the block using RecBuffer::getSlotMap() function
 
         // If slot >= the number of slots per block(i.e. no more slots in this block)
-        RelCatEntry relcatentry;
-        RelCacheTable::getRelCatEntry(relId,&relcatentry);
-        if(slot>=relcatentry.numSlotsPerBlk)
+        // RelCatEntry relcatentry;
+        // RelCacheTable::getRelCatEntry(relId,&relcatentry);
+        if(slot>=slotnum)
         {
             // update block = right block of block
             // update slot = 0
