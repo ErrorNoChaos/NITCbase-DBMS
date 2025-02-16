@@ -97,48 +97,53 @@ RecId BlockAccess::linearSearch(int relId, char attrName[ATTR_SIZE], union Attri
 }
 int BlockAccess::renameRelation(char oldName[ATTR_SIZE], char newName[ATTR_SIZE])
 {
-    /* reset the searchIndex of the relation catalog using
-       RelCacheTable::resetSearchIndex() */
+  
+    RelCacheTable::resetSearchIndex(RELCAT_RELID);
 
-    Attribute newRelationName; // set newRelationName with newName
+    Attribute newRelationName; 
+    strcpy(newRelationName.sVal,newName);
 
-    // search the relation catalog for an entry with "RelName" = newRelationName
+    char attrv[ATTR_SIZE];
+    strcpy(attrv,RELCAT_ATTR_RELNAME);
+    RecId rec;
+    rec=linearSearch(RELCAT_RELID,attrv,newRelationName,EQ);
+    if(rec.block!=-1 && rec.slot!=-1){
+        return E_RELEXIST;
+    }
 
-    // If relation with name newName already exists (result of linearSearch
-    //                                               is not {-1, -1})
-    //    return E_RELEXIST;
+    RelCacheTable::resetSearchIndex(RELCAT_RELID);
 
-    /* reset the searchIndex of the relation catalog using
-       RelCacheTable::resetSearchIndex() */
+    Attribute oldRelationName;
+    strcpy(oldRelationName.sVal, oldName);
 
-    Attribute oldRelationName; // set oldRelationName with oldName
+    char attrc[ATTR_SIZE];
+    strcpy(attrc,RELCAT_ATTR_RELNAME);
+    RecId reco;
+    reco=linearSearch(RELCAT_RELID,attrc,oldRelationName,EQ);
+    if(reco.block==-1 && reco.slot==-1){
+        return E_RELNOTEXIST;
+    }
 
-    // search the relation catalog for an entry with "RelName" = oldRelationName
 
-    // If relation with name oldName does not exist (result of linearSearch is {-1, -1})
-    //    return E_RELNOTEXIST;
+   RecBuffer relcatblock(RELCAT_BLOCK);
+   Attribute record[RELCAT_NO_ATTRS];
+   relcatblock.getRecord(record,reco.slot);
+   strcpy(record[RELCAT_REL_NAME_INDEX].sVal,newName);
+   relcatblock.setRecord(record,reco.slot);
 
-    /* get the relation catalog record of the relation to rename using a RecBuffer
-       on the relation catalog [RELCAT_BLOCK] and RecBuffer.getRecord function
-    */
-    /* update the relation name attribute in the record with newName.
-       (use RELCAT_REL_NAME_INDEX) */
-    // set back the record value using RecBuffer.setRecord
+    RelCacheTable::resetSearchIndex(ATTRCAT_RELID);
 
-    /*
-    update all the attribute catalog entries in the attribute catalog corresponding
-    to the relation with relation name oldName to the relation name newName
-    */
-
-    /* reset the searchIndex of the attribute catalog using
-       RelCacheTable::resetSearchIndex() */
-
-    // for i = 0 to numberOfAttributes :
-    //     linearSearch on the attribute catalog for relName = oldRelationName
-    //     get the record using RecBuffer.getRecord
-    //
-    //     update the relName field in the record to newName
-    //     set back the record using RecBuffer.setRecord
+   char attrname[ATTR_SIZE];
+   strcpy(attrname,ATTRCAT_ATTR_RELNAME);
+   for(int i=0;i<record[RELCAT_NO_ATTRIBUTES_INDEX].nVal;i++){
+    RecId rec;
+    rec=linearSearch(ATTRCAT_RELID,attrname,oldRelationName,EQ);
+    RecBuffer attrblock(rec.block);
+    Attribute reco[ATTRCAT_NO_ATTRS];
+    attrblock.getRecord(reco,rec.slot);
+    strcpy(reco[ATTRCAT_REL_NAME_INDEX].sVal,newName);
+    attrblock.setRecord(reco,rec.slot);
+   }
 
     return SUCCESS;
 }
