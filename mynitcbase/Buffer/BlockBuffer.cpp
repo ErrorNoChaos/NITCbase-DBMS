@@ -33,15 +33,6 @@ RecBuffer::RecBuffer(int blockNum) : BlockBuffer::BlockBuffer(blockNum) {}
 
 //////stage-5
 
-/* NOTE: This function will NOT check if the block has been initialised as a
-   record or an index block. It will copy whatever content is there in that
-   disk block to the buffer.
-   Also ensure that all the methods accessing and updating the block's data
-   should call the loadBlockAndGetBufferPtr() function before the access or
-   update is done. This is because the block might not be present in the
-   buffer due to LRU buffer replacement. So, it will need to be bought back
-   to the buffer before any operations can be done.
- */
 int BlockBuffer::loadBlockAndGetBufferPtr(unsigned char **buffPtr)
 {
 
@@ -61,8 +52,9 @@ int BlockBuffer::loadBlockAndGetBufferPtr(unsigned char **buffPtr)
             return E_OUTOFBOUND;
         }
         Disk::readBlock(StaticBuffer::blocks[bufferNum],this->blockNum);
-        *buffPtr=StaticBuffer::blocks[bufferNum];
+       
     }
+    *buffPtr = StaticBuffer::blocks[bufferNum];
     return SUCCESS;
 }
 int BlockBuffer::getHeader(struct HeadInfo *head)
@@ -102,6 +94,30 @@ int RecBuffer::getRecord(union Attribute *rec, int slotNum)
     unsigned char *slotpointer=bufferPtr+offset;
     memcpy(rec,slotpointer,recordsize);
     return SUCCESS;
+}
+int RecBuffer::setRecord(union Attribute *rec, int slotNum)
+{
+    unsigned char *bufferPtr;
+    int y;
+    y=loadBlockAndGetBufferPtr(&bufferPtr);
+    if(y!=SUCCESS){
+        return y;
+    }
+    HeadInfo head;
+    this->getHeader(&head);
+    int numattrs=head.numAttrs;
+    int numslots=head.numSlots;
+    if(slotNum<0 ||slotNum>numslots){
+        return E_OUTOFBOUND;
+    }
+   int recordsize=ATTR_SIZE*numattrs;
+   int offset=HEADER_SIZE+(slotNum*recordsize)+numslots+numslots;
+   unsigned char *slotpointer=bufferPtr+offset;
+   memcpy(slotpointer,rec,recordsize);
+
+   StaticBuffer::setDirtyBit(this->blockNum);
+
+   return SUCCESS;
 }
 
 int RecBuffer::getSlotMap(unsigned char *slotMap)
