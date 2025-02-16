@@ -6,26 +6,63 @@ BlockBuffer::BlockBuffer(int blockNum)
     this->blockNum=blockNum;
 
 }
- RecBuffer::RecBuffer(int blockNum) : BlockBuffer::BlockBuffer(blockNum) {}
+RecBuffer::RecBuffer(int blockNum) : BlockBuffer::BlockBuffer(blockNum) {}
+/////////stage-5\\\\\\\
 
+
+// int BlockBuffer::loadBlockAndGetBufferPtr(unsigned char **buffPtr)
+// {
+//     int bufferNum = StaticBuffer::getBufferNum(this->blockNum);
+
+//     if (bufferNum == E_BLOCKNOTINBUFFER)
+//     {
+//         bufferNum = StaticBuffer::getFreeBuffer(this->blockNum);
+
+//         if (bufferNum == E_OUTOFBOUND)
+//         {
+//             return E_OUTOFBOUND;
+//         }
+
+//         Disk::readBlock(StaticBuffer::blocks[bufferNum], this->blockNum);
+//     }
+
+//     *buffPtr = StaticBuffer::blocks[bufferNum];
+
+//     return SUCCESS;
+// }
+
+//////stage-5
+
+/* NOTE: This function will NOT check if the block has been initialised as a
+   record or an index block. It will copy whatever content is there in that
+   disk block to the buffer.
+   Also ensure that all the methods accessing and updating the block's data
+   should call the loadBlockAndGetBufferPtr() function before the access or
+   update is done. This is because the block might not be present in the
+   buffer due to LRU buffer replacement. So, it will need to be bought back
+   to the buffer before any operations can be done.
+ */
 int BlockBuffer::loadBlockAndGetBufferPtr(unsigned char **buffPtr)
 {
+
     int bufferNum = StaticBuffer::getBufferNum(this->blockNum);
-
-    if (bufferNum == E_BLOCKNOTINBUFFER)
-    {
-        bufferNum = StaticBuffer::getFreeBuffer(this->blockNum);
-
-        if (bufferNum == E_OUTOFBOUND)
-        {
-            return E_OUTOFBOUND;
+    if(bufferNum!=E_BLOCKNOTINBUFFER){
+        for(int i=0;i<32;i++){
+            if(i==bufferNum){
+                StaticBuffer::metainfo[bufferNum].timeStamp=0;
+            }
+            StaticBuffer::metainfo[i].timeStamp+=1;
         }
 
-        Disk::readBlock(StaticBuffer::blocks[bufferNum], this->blockNum);
     }
-
-    *buffPtr = StaticBuffer::blocks[bufferNum];
-
+    else{
+        bufferNum =StaticBuffer::getFreeBuffer(this->blockNum);
+        if(bufferNum==E_OUTOFBOUND){
+            return E_OUTOFBOUND;
+        }
+        Disk::readBlock(StaticBuffer::blocks[bufferNum],this->blockNum);
+        *buffPtr=StaticBuffer::blocks[bufferNum];
+    }
     return SUCCESS;
 }
 int BlockBuffer::getHeader(struct HeadInfo *head)

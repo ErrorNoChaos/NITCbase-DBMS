@@ -5,10 +5,6 @@
 int Schema::openRel(char relName[ATTR_SIZE])
 {
     int ret = OpenRelTable::openRel(relName);
-
-    // the OpenRelTable::openRel() function returns the rel-id if successful
-    // a valid rel-id will be within the range 0 <= relId < MAX_OPEN and any
-    // error codes will be negative
     if (ret < 0 || ret>= MAX_OPEN)
     {
         return E_OUTOFBOUND;
@@ -18,7 +14,6 @@ int Schema::openRel(char relName[ATTR_SIZE])
         return SUCCESS;
     }
 
-    // otherwise it returns an error message
     return ret;
 }
 
@@ -28,9 +23,6 @@ int Schema::closeRel(char relName[ATTR_SIZE])
     {
         return E_NOTPERMITTED;
     }
-
-    // this function returns the rel-id of a relation if it is open or
-    // E_RELNOTOPEN if it is not. we will implement this later.
     int relId = OpenRelTable::getRelId(relName);
 
     if (relId == E_RELNOTOPEN)
@@ -39,4 +31,33 @@ int Schema::closeRel(char relName[ATTR_SIZE])
     }
 
     return OpenRelTable::closeRel(relId);
+}
+int renameRel(char oldRelName[ATTR_SIZE], char newRelName[ATTR_SIZE])
+{
+    if (strcmp(oldRelName, "RELATIONCAT") == 0 || strcmp(newRelName, "ATTRIBUTECAT") == 0 || strcmp(oldRelName, "ATTRIBUTECAT") == 0 || strcmp(newRelName, "RELATIONCAT") == 0)
+    {
+        return E_NOTPERMITTED;
+    }
+    if(OpenRelTable::getRelId(oldRelName)!=E_RELNOTOPEN){
+        return E_RELOPEN;
+    }
+    int retVal=BlockAccess::renameRelation(oldRelName,newRelName);
+    return retVal;
+
+}
+int Schema::renameAttr(char *relName, char *oldAttrName, char *newAttrName)
+{
+
+    if (strcmp(oldAttrName, "RELATIONCAT") == 0 || strcmp(oldAttrName, "ATTRIBUTECAT") == 0 || strcmp(newAttrName, "ATTRIBUTECAT") == 0 || strcmp(newAttrName, "RELATIONCAT") == 0)
+    {
+        return E_NOTPERMITTED;
+    }
+    if(OpenRelTable::getRelId(relName)!=E_RELNOTOPEN){
+        return E_RELOPEN;
+    }
+      return E_RELOPEN;
+
+    int retVal=BlockAccess::renameAttribute(relName,oldAttrName,newAttrName);
+    return retVal;
+    
 }
