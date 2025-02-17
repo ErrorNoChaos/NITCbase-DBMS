@@ -1,6 +1,8 @@
 #include "BlockBuffer.h"
 #include <cstdlib>
 #include <cstring>
+#include <stdio.h>
+#include <iostream>
 BlockBuffer::BlockBuffer(int blockNum)
 {
     this->blockNum=blockNum;
@@ -39,11 +41,9 @@ int BlockBuffer::loadBlockAndGetBufferPtr(unsigned char **buffPtr)
     int bufferNum = StaticBuffer::getBufferNum(this->blockNum);
     if(bufferNum!=E_BLOCKNOTINBUFFER){
         for(int i=0;i<32;i++){
-            if(i==bufferNum){
-                StaticBuffer::metainfo[bufferNum].timeStamp=0;
-            }
-            StaticBuffer::metainfo[i].timeStamp+=1;
+            StaticBuffer::metainfo[i].timeStamp++;
         }
+        StaticBuffer::metainfo[bufferNum].timeStamp=0;
 
     }
     else{
@@ -111,11 +111,14 @@ int RecBuffer::setRecord(union Attribute *rec, int slotNum)
         return E_OUTOFBOUND;
     }
    int recordsize=ATTR_SIZE*numattrs;
-   int offset=HEADER_SIZE+(slotNum*recordsize)+numslots+numslots;
+   int offset=HEADER_SIZE+(slotNum*recordsize)+numslots;
    unsigned char *slotpointer=bufferPtr+offset;
    memcpy(slotpointer,rec,recordsize);
 
-   StaticBuffer::setDirtyBit(this->blockNum);
+   int ret=StaticBuffer::setDirtyBit(this->blockNum);
+   if(ret!=SUCCESS){
+    std::cout<<"setdirty function not working";
+   }
 
    return SUCCESS;
 }
