@@ -57,8 +57,6 @@ int Schema::renameAttr(char *relName, char *oldAttrName, char *newAttrName)
     if(OpenRelTable::getRelId(relName)!=E_RELNOTOPEN){
         return E_RELOPEN;
     }
-      return E_RELOPEN;
-
     int retVal=BlockAccess::renameAttribute(relName,oldAttrName,newAttrName);
     return retVal;
     
