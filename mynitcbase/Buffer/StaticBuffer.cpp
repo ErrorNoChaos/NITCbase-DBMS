@@ -1,9 +1,23 @@
 #include "StaticBuffer.h"
 unsigned char StaticBuffer::blocks[BUFFER_CAPACITY][BLOCK_SIZE];
 struct BufferMetaInfo StaticBuffer::metainfo[BUFFER_CAPACITY];
+unsigned char StaticBuffer::blockAllocMap[DISK_BLOCKS];
+
 StaticBuffer::StaticBuffer()
 {
 
+    for(int i=0,blockalmap=0;i<4;i++){
+    Disk::readBlock(blocks[i],i);
+
+    for(int i=0;i<=3;i++){
+        unsigned char buff[BLOCK_SIZE];
+        Disk::readBlock(buff,i);
+        for(int j=0;j<2048;j++){
+            blockAllocMap[(2048*i)+j]=buff[j];
+        }
+    }
+
+    }
     for (int i = 0; i < 32; i++)
     {
         metainfo[i].blockNum = -1;
@@ -15,14 +29,36 @@ StaticBuffer::StaticBuffer()
 
 StaticBuffer::~StaticBuffer()
 {
-    for (int i = 0; i < 32; i++)
-    {
-        if (metainfo[i].free==false && metainfo[i].dirty==true)
-        {
-
-            Disk::writeBlock(blocks[i], metainfo[i].blockNum);
+   for(int i=0;i<4;i++){
+        unsigned char buff[BLOCK_SIZE];
+        for(int j=0;j<2048;j++){
+            buff[j]=blockAllocMap[(2048*i)+j];
+        }
+        Disk::writeBlock(buff,i);
+   }
+    for(int i=0;i<32;i++){
+        if(metainfo[i].dirty && !metainfo[i].free){
+            Disk::writeBlock(blocks[i],metainfo[i].blockNum);
         }
     }
+
+}
+int StaticBuffer::setDirtyBit(int blockNum)
+{
+    int buffindex = getBufferNum(blockNum);
+    if (buffindex == E_BLOCKNOTINBUFFER)
+    {
+        return E_BLOCKNOTINBUFFER;
+    }
+    if (buffindex == E_OUTOFBOUND)
+    {
+        return E_OUTOFBOUND;
+    }
+    else
+    {
+        metainfo[buffindex].dirty = true;
+    }
+    return SUCCESS;
 }
 int StaticBuffer::getBufferNum(int blockNum)
 {
@@ -42,81 +78,46 @@ int StaticBuffer::getBufferNum(int blockNum)
 
     return E_BLOCKNOTINBUFFER;
 }
-// int StaticBuffer::getFreeBuffer(int blockNum)
-// {
-
-//     if (blockNum < 0 || blockNum >= BLOCK_SIZE)
-//     {
-//         return E_OUTOFBOUND;
-//     }
-
-//     for (int i = 0; i < 32; i++)
-//     {
-//         if (!metainfo[i].free)
-//         {
-//             metainfo[i].timeStamp += 1;
-//         }
-//     }
-//     int bufferNum = -1;
-//     for (int i = 0; i < 32; i++)
-//     {
-//         if (metainfo[i].free)
-//         {
-//             bufferNum = i;
-//             break;
-//         }
-//     }
-//     if (bufferNum == -1)
-//     {
-//         int largest = -1;
-//         int flag = -1;
-//         for (int i = 0; i < 32; i++)
-//         {
-//             if (metainfo[i].timeStamp > largest)
-//             {
-//                 largest = metainfo[i].timeStamp;
-//                 flag = i;
-//             }
-//         }
-//         bufferNum = flag;
-//         if (metainfo[flag].dirty)
-//         {
-//             Disk::writeBlock(blocks[flag], metainfo[flag].blockNum);
-//         }
-//     }
-//     metainfo[bufferNum].free = false;
-//     metainfo[bufferNum].dirty = false;
-//     metainfo[bufferNum].blockNum = blockNum;
-//     metainfo[bufferNum].timeStamp = 0;
-//     return bufferNum;
-// }
-
 int StaticBuffer::getFreeBuffer(int blockNum)
 {
 
-    if (blockNum < 0 || blockNum > DISK_BLOCKS)
+    if (blockNum < 0 || blockNum >= BLOCK_SIZE)
     {
         return E_OUTOFBOUND;
     }
-    int bufferNum = -1;
-    int largest = 0;
-    int flag = 0;
+
     for (int i = 0; i < 32; i++)
     {
-        if (metainfo[i].timeStamp > largest)
+        if (!metainfo[i].free)
         {
-                largest = metainfo[i].timeStamp;
-                flag = i;
+            metainfo[i].timeStamp += 1;
         }
-        if(metainfo[i].free){
-            bufferNum=i;
+    }
+    int bufferNum = -1;
+    for (int i = 0; i < 32; i++)
+    {
+        if (metainfo[i].free)
+        {
+            bufferNum = i;
             break;
         }
     }
-    if(bufferNum==-1){
-        if(metainfo[flag].dirty==true){
-            Disk::writeBlock(blocks[flag],metainfo[flag].blockNum);
-            bufferNum=flag;
+    if (bufferNum == -1)
+    {
+        int largest = -1;
+        int flag = -1;
+        for (int i = 0; i < 32; i++)
+        {
+            if (metainfo[i].timeStamp > largest)
+            {
+                largest = metainfo[i].timeStamp;
+                flag = i;
+            }
+        }
+        bufferNum = flag;
+        if (metainfo[flag].dirty)
+        {
+            Disk::writeBlock(blocks[flag], metainfo[flag].blockNum);
         }
     }
     metainfo[bufferNum].free = false;
@@ -125,23 +126,87 @@ int StaticBuffer::getFreeBuffer(int blockNum)
     metainfo[bufferNum].timeStamp = 0;
     return bufferNum;
 }
-int StaticBuffer::setDirtyBit(int blockNum)
-{
-    int buffindex = getBufferNum(blockNum);
-    if (buffindex == E_BLOCKNOTINBUFFER)
-    {
-        return E_BLOCKNOTINBUFFER;
-    }
-    if (buffindex == E_OUTOFBOUND)
-    {
-        return E_OUTOFBOUND;
-    }
-    else
-    {
-        metainfo[buffindex].dirty = true;
-    }
-    return SUCCESS;
-}
+
+//////////////stage-6///////////////////
+// StaticBuffer::StaticBuffer()
+// {
+
+//     for (int i = 0; i < 32; i++)
+//     {
+//         metainfo[i].blockNum = -1;
+//         metainfo[i].dirty = false;
+//         metainfo[i].free = true;
+//         metainfo[i].timeStamp = -1;
+//     }
+// }
+
+// StaticBuffer::~StaticBuffer()
+// {
+//     for (int i = 0; i < 32; i++)
+//     {
+//         if (metainfo[i].free==false && metainfo[i].dirty==true)
+//         {
+
+//             Disk::writeBlock(blocks[i], metainfo[i].blockNum);
+//         }
+//     }
+// }
+
+
+///////////////////////////////////////////////////
+
+
+// int StaticBuffer::getFreeBuffer(int blockNum)
+// {
+
+//     if (blockNum < 0 || blockNum > DISK_BLOCKS)
+//     {
+//         return E_OUTOFBOUND;
+//     }
+//     int bufferNum = -1;
+//     int largest = 0;
+//     int flag = 0;
+//     for (int i = 0; i < 32; i++)
+//     {
+//         if (metainfo[i].timeStamp > largest)
+//         {
+//                 largest = metainfo[i].timeStamp;
+//                 flag = i;
+//         }
+//         if(metainfo[i].free){
+//             bufferNum=i;
+//             break;
+//         }
+//     }
+//     if(bufferNum==-1){
+//         if(metainfo[flag].dirty==true){
+//             Disk::writeBlock(blocks[flag],metainfo[flag].blockNum);
+//             bufferNum=flag;
+//         }
+//     }
+//     metainfo[bufferNum].free = false;
+//     metainfo[bufferNum].dirty = false;
+//     metainfo[bufferNum].blockNum = blockNum;
+//     metainfo[bufferNum].timeStamp = 0;
+//     return bufferNum;
+// }
+// int StaticBuffer::setDirtyBit(int blockNum)
+// {
+//     int buffindex = getBufferNum(blockNum);
+//     if (buffindex == E_BLOCKNOTINBUFFER)
+//     {
+//         return E_BLOCKNOTINBUFFER;
+//     }
+//     if (buffindex == E_OUTOFBOUND)
+//     {
+//         return E_OUTOFBOUND;
+//     }
+//     else
+//     {
+//         metainfo[buffindex].dirty = true;
+//     }
+//     return SUCCESS;
+// }
 
 //////////stage-4/////////////4
 // StaticBuffer::StaticBuffer()

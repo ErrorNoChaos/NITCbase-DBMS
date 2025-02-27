@@ -73,3 +73,31 @@ void RelCacheTable::recordToRelCatEntry(union Attribute record[RELCAT_NO_ATTRS],
     relCatEntry->numSlotsPerBlk=(int)record[RELCAT_NO_SLOTS_PER_BLOCK_INDEX].nVal;
     relCatEntry->numRecs=(int)record[RELCAT_NO_RECORDS_INDEX].nVal;
 }
+int RelCacheTable::setRelCatEntry(int relId, RelCatEntry *relCatBuf)
+{
+
+    if (relId<0 ||relId>=12)
+    {
+        return E_OUTOFBOUND;
+    }
+
+    if (relCache[relId]==nullptr)
+    {
+        return E_RELNOTOPEN;
+    }
+
+    relCache[relId]->relCatEntry=*relCatBuf;
+    relCache[relId]->dirty=true;
+
+    return SUCCESS;
+ }
+ void RelCacheTable::relCatEntryToRecord(RelCatEntry *relCatEntry, union Attribute record[RELCAT_NO_ATTRS])
+ {
+
+     strcpy(record[RELCAT_REL_NAME_INDEX].sVal, relCatEntry->relName);
+     record[RELCAT_NO_ATTRIBUTES_INDEX].nVal = (int)relCatEntry->numAttrs;
+     record[RELCAT_FIRST_BLOCK_INDEX].nVal = (int)relCatEntry->firstBlk;
+     record[RELCAT_LAST_BLOCK_INDEX].nVal = (int)relCatEntry->lastBlk;
+     record[RELCAT_NO_SLOTS_PER_BLOCK_INDEX].nVal = (int)relCatEntry->numSlotsPerBlk;
+     record[RELCAT_NO_RECORDS_INDEX].nVal = (int)relCatEntry->numRecs;
+}

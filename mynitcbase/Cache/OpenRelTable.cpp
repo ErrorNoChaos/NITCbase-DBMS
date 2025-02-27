@@ -1,5 +1,6 @@
 
 #include "OpenRelTable.h"
+#include "RelCacheTable.h"
 #include <stdlib.h>
 #include <cstring>
 
@@ -44,50 +45,91 @@ int OpenRelTable::getRelId(char relName[ATTR_SIZE])
     return E_RELNOTOPEN;
 
 }
+
 int OpenRelTable::closeRel(int relId)
 {
-    if (relId == 0 || relId == 1)
-    {
-        return E_NOTPERMITTED;
-    }
+        if (relId < 0 || relId >= MAX_OPEN)
+        {
+            return E_OUTOFBOUND;
+        }
 
-    if (relId < 0 || relId >= MAX_OPEN)
-    {
-        return E_OUTOFBOUND;
-    }
 
-    if (tableMetaInfo[relId].free)
+    if (RelCacheTable::relCache[relId]->dirty)
     {
-        return E_RELNOTOPEN;
-    }
 
-    if (AttrCacheTable::attrCache[relId] == nullptr)
-    {
-        return E_RELNOTOPEN;
-    }
 
-    // Free RelCache entry
-    if (RelCacheTable::relCache[relId] != nullptr)
-    {
-        free(RelCacheTable::relCache[relId]);
-        RelCacheTable::relCache[relId] = nullptr;
-    }
+        RelCatEntry relcatentry;
+        relcatentry=RelCacheTable::relCache[relId]->relCatEntry;
+        int numattrs=relcatentry.numAttrs;
+        Attribute record[numattrs];
+        RelCacheTable::relCatEntryToRecord(&relcatentry,record);
 
-    // Free AttrCache entries
-    AttrCacheEntry *current = AttrCacheTable::attrCache[relId];
-    while (current != nullptr)
-    {
-        AttrCacheEntry *temp = current;
-        current = current->next;
-        free(temp);
-    }
-    AttrCacheTable::attrCache[relId] = nullptr;
+        RecId recId=RelCacheTable::relCache[relId]->recId;
+        RecBuffer relCatBlock(recId.block);
+        relCatBlock.setRecord(record,recId.slot);
 
-    // Mark as free
-    tableMetaInfo[relId].free = true;
+    }
+    free(RelCacheTable::relCache[relId]);
+    AttrCacheEntry *head=AttrCacheTable::attrCache[relId];
+    AttrCacheEntry *next=head->next;
+    while(next!=nullptr){
+        free(head);
+        head=next;
+        next=next->next;
+    }
+    free(head);
+    tableMetaInfo[relId].free=true;
+    RelCacheTable::relCache[relId]=nullptr;
+    AttrCacheTable::attrCache[relId]=nullptr;
 
     return SUCCESS;
 }
+
+///////////stage-6///////////////////
+// int OpenRelTable::closeRel(int relId)
+// {
+//     if (relId == 0 || relId == 1)
+//     {
+//         return E_NOTPERMITTED;
+//     }
+
+//     if (relId < 0 || relId >= MAX_OPEN)
+//     {
+//         return E_OUTOFBOUND;
+//     }
+
+//     if (tableMetaInfo[relId].free)
+//     {
+//         return E_RELNOTOPEN;
+//     }
+
+//     if (AttrCacheTable::attrCache[relId] == nullptr)
+//     {
+//         return E_RELNOTOPEN;
+//     }
+
+//     // Free RelCache entry
+//     if (RelCacheTable::relCache[relId] != nullptr)
+//     {
+//         free(RelCacheTable::relCache[relId]);
+//         RelCacheTable::relCache[relId] = nullptr;
+//     }
+
+//     // Free AttrCache entries
+//     AttrCacheEntry *current = AttrCacheTable::attrCache[relId];
+//     while (current != nullptr)
+//     {
+//         AttrCacheEntry *temp = current;
+//         current = current->next;
+//         free(temp);
+//     }
+//     AttrCacheTable::attrCache[relId] = nullptr;
+
+//     // Mark as free
+//     tableMetaInfo[relId].free = true;
+
+//     return SUCCESS;
+// }
 
 
 
