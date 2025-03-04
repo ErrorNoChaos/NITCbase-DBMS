@@ -7,19 +7,18 @@ int Frontend::select_from_table_where(char relname_source[ATTR_SIZE], char relna
 {
   return Algebra::select(relname_source, relname_target, attribute, op, value);
 }
-int Frontend::create_table(char relname[ATTR_SIZE], int no_attrs, char attributes[][ATTR_SIZE],
-                           int type_attrs[]) {
-  // Schema::createRel
-  return SUCCESS;
+int Frontend::create_table(char relname[ATTR_SIZE], int no_attrs, char attributes[][ATTR_SIZE], int type_attrs[])
+{
+  return Schema::createRel(relname, no_attrs, attributes, type_attrs);
+}
+
+int Frontend::drop_table(char relname[ATTR_SIZE])
+{
+  return Schema::deleteRel(relname);
 }
 int Frontend::insert_into_table_values(char relname[ATTR_SIZE], int attr_count, char attr_values[][ATTR_SIZE])
 {
   return Algebra::insert(relname, attr_count, attr_values);
-}
-
-int Frontend::drop_table(char relname[ATTR_SIZE]) {
-  // Schema::deleteRel
-  return SUCCESS;
 }
 
 int Frontend::open_table(char relname[ATTR_SIZE])
