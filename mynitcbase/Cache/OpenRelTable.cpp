@@ -280,7 +280,7 @@ OpenRelTable::~OpenRelTable()
    
     free(RelCacheTable::relCache[1]);
     RelCacheTable::relCache[1]=nullptr;
-    }
+        }
 
     if(RelCacheTable::relCache[0]!=nullptr){
     if (RelCacheTable::relCache[0]->dirty)  
